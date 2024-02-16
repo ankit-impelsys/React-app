@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
 )
@@ -30,7 +31,7 @@ func init() {
 func main() {
 	// Create a new Gin router
 	router := gin.Default()
-
+	router.Use(cors.Default())
 	// Define a route and handler function for the root endpoint
 	router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hello, ScyllaDB Go Server!")
@@ -49,34 +50,35 @@ func main() {
 }
 
 func getUserStats(c *gin.Context) {
-
 	userId := c.Param("userId")
 
 	query := "SELECT product_id, time_taken FROM task1.user_stats WHERE user_id = ? ALLOW FILTERING"
 	iter := session.Query(query, userId).Iter()
+
+	defer iter.Close() // Ensure the iterator is closed when the function exits
 
 	// log.Printf("Executed query: %s with userId: %s\n", query, userId)
 	// fmt.Println(iter.NumRows())
 
 	if iter.NumRows() == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		iter.Close()
 		return
 	}
 
 	var productID int
-	var timeTakenMilliseconds int64
+	var timeTaken int64
 
-	for iter.Scan(&productID, &timeTakenMilliseconds) {
-		timeTakenSeconds := timeTakenMilliseconds / 1000
+	if iter.Scan(&productID, &timeTaken) {
+		timeTakenInSeconds := timeTaken / 1000
 		response := gin.H{
 			"data": gin.H{
 				"product_id": productID,
-				"time_taken": timeTakenSeconds,
+				"time_taken": timeTakenInSeconds,
 			},
 		}
 		c.JSON(http.StatusOK, response)
+		return
 	}
-	iter.Close()
 
+	c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 }
