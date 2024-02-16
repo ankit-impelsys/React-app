@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
+	
 
 	"github.com/gocql/gocql"
 	"github.com/gorilla/mux"
@@ -66,7 +66,7 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	var id int
 	var userId int
 	var productId int
-	var timeTaken time.Time
+	var timeTaken int 
 	query := session.Query("SELECT id, user_id, product_id, time_taken FROM user_stats WHERE user_id = ? ALLOW FILTERING", userID)
 
 	// Execute the query
