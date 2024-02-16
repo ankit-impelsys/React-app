@@ -5,10 +5,6 @@ function App() {
   const [data, setData] = useState([]);
   const [userID, setUserID] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, [userID]);
-
   const fetchData = () => {
     if (userID) {
       fetch(`http://localhost:8080/data?user_id=${userID}`)
@@ -22,15 +18,19 @@ function App() {
     setUserID(event.target.value);
   };
 
+  const handleFetchDataClick = () => {
+    fetchData();
+  };
+
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Welcome to My Basic React App!</h1>
-        <p>This is the home page.</p>
+        <h1>Welcome to the React App!</h1>
+        <p>Enter the user id </p>
         <div>
           <label htmlFor="user_id">User ID: </label>
           <input type="text" id="user_id" value={userID} onChange={handleUserIDChange} />
-          <button onClick={fetchData}>Fetch Data</button>
+          <button onClick={handleFetchDataClick}>Fetch Data</button>
         </div>
         <ul>
           {data && data.map(item => (
