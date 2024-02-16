@@ -43,6 +43,13 @@ func corsMiddleware(h http.Handler) http.Handler {
 }
 
 func getData(w http.ResponseWriter, r *http.Request) {
+	// Get the user_id from query parameters
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		http.Error(w, "Missing user_id parameter", http.StatusBadRequest)
+		return
+	}
+
 	// Connect to the ScyllaDB cluster
 	cluster := gocql.NewCluster("127.0.0.1")
 	cluster.Keyspace = "stats"
@@ -55,12 +62,12 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	}
 	defer session.Close()
 
-	// Define your query
+	// Define your query with user_id filter and ALLOW FILTERING
 	var id int
 	var userId int
 	var productId int
 	var timeTaken time.Time
-	query := session.Query("SELECT id, user_id, product_id, time_taken FROM user_stats")
+	query := session.Query("SELECT id, user_id, product_id, time_taken FROM user_stats WHERE user_id = ? ALLOW FILTERING", userID)
 
 	// Execute the query
 	iter := query.Iter()
@@ -90,3 +97,4 @@ func getData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResponse)
 }
+
